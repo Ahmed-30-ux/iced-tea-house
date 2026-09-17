@@ -4,15 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "db:push": "npx prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:reset": "npx prisma db push --force-reset && npx tsx prisma/seed.ts",
     "postinstall": "npx prisma generate",
-    "test": "vitest run",
-    "vercel-postbuild": "npx prisma generate"
+    "test": "vitest run"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
