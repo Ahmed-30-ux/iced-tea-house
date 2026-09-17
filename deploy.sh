@@ -9,7 +9,7 @@ set -e
 
 APP_NAME="iced-tea-house"
 APP_DIR="/var/www/$APP_NAME"
-REPO_URL="https://github.com/YOUR_USERNAME/iced-tea-house.git"  # <-- CHANGE THIS
+REPO_URL="https://github.com/Ahmed-30-ux/iced-tea-house.git"
 DOMAIN=""  # <-- CHANGE THIS (e.g., icedteahouse.com) — leave empty for IP-only
 NODE_VERSION=20
 
