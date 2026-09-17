@@ -1,0 +1,376 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== CORE ENTITIES =====
+
+model Business {
+  id             String     @id @default(cuid())
+  name           String
+  tagline        String?
+  instagram      String?
+  currency       String     @default("PKR")
+  logo           String?
+  settings       String? // JSON string of configurable settings (notification prefs, low stock thresholds, etc.)
+  isDemo         Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  users          User[]
+  locations      Location[]
+  products       Product[]
+  categories     Category[]
+  customers      Customer[]
+  suppliers      Supplier[]
+  orders         Order[]
+  purchases      Purchase[]
+  expenses       Expense[]
+  inventoryMovements InventoryMovement[]
+  financialTransactions FinancialTransaction[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+}
+
+model Location {
+  id         String    @id @default(cuid())
+  businessId String
+  name       String
+  address    String?
+  phone      String?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  products   Product[]
+  orders     Order[]
+  purchases  Purchase[]
+  expenses   Expense[]
+}
+
+model User {
+  id             String    @id @default(cuid())
+  businessId     String?
+  name           String
+  email          String    @unique
+  passwordHash   String
+  role           Role      @default(STAFF)
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  business       Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  orders         Order[]
+  purchases      Purchase[]
+  expenses       Expense[]
+  financialTransactions FinancialTransaction[]
+  auditLogs      AuditLog[]
+}
+
+enum Role {
+  OWNER
+  MANAGER
+  STAFF
+}
+
+model Category {
+  id         String    @id @default(cuid())
+  businessId String
+  name       String
+  description String?
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  products   Product[]
+  createdAt  DateTime  @default(now())
+}
+
+model Product {
+  id             String    @id @default(cuid())
+  businessId     String
+  categoryId     String?
+  locationId     String?
+  name           String
+  sku            String?
+  sellingPrice   Float
+  costPrice      Float
+  currentStock   Float     @default(0)
+  reorderLevel   Float     @default(0)
+  supplier       String?
+  imageUrl       String?
+  status         ProductStatus @default(ACTIVE)
+  isDemo         Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  business       Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category       Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  location       Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  orderItems     OrderItem[]
+  purchaseItems  PurchaseItem[]
+  movements      InventoryMovement[]
+  salesHistory   Sale[]
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  DISCONTINUED
+}
+
+model Customer {
+  id            String    @id @default(cuid())
+  businessId    String
+  name          String
+  phone         String?
+  email         String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  orders        Order[]
+  payments      Payment[]
+}
+
+model Supplier {
+  id         String    @id @default(cuid())
+  businessId String
+  name       String
+  phone      String?
+  email      String?
+  notes      String?
+  createdAt  DateTime  @default(now())
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  purchases  Purchase[]
+}
+
+model Order {
+  id             String       @id @default(cuid())
+  businessId     String
+  locationId     String?
+  orderNumber    String
+  customerId     String?
+  orderDate      DateTime     @default(now())
+  status         OrderStatus  @default(PENDING)
+  paymentStatus  PaymentStatus @default(UNPAID)
+  paymentMethod  PaymentMethod?
+  subtotal       Float        @default(0)
+  discount       Float        @default(0)
+  total          Float        @default(0)
+  totalCogs      Float        @default(0)
+  grossProfit    Float        @default(0)
+  amountPaid     Float        @default(0)
+  notes          String?
+  userId         String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  business       Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  location       Location?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  customer       Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items          OrderItem[]
+  payments       Payment[]
+  sales          Sale[]
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PAID
+  PARTIALLY_PAID
+  UNPAID
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  OTHER
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String?
+  productName String
+  sku         String?
+  quantity    Float
+  unitPrice   Float
+  costPrice   Float
+  discount    Float    @default(0)
+  lineTotal   Float
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+model Purchase {
+  id            String          @id @default(cuid())
+  businessId    String
+  locationId    String?
+  purchaseNumber String
+  supplierId    String?
+  purchaseDate  DateTime        @default(now())
+  status        PurchaseStatus  @default(PENDING)
+  paymentStatus PaymentStatus   @default(UNPAID)
+  paymentMethod PaymentMethod?
+  totalCost     Float           @default(0)
+  amountPaid    Float           @default(0)
+  notes         String?
+  userId        String?
+  createdAt     DateTime        @default(now())
+  business      Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  location      Location?       @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  user          User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items         PurchaseItem[]
+}
+
+enum PurchaseStatus {
+  PENDING
+  RECEIVED
+  CANCELLED
+}
+
+model PurchaseItem {
+  id          String   @id @default(cuid())
+  purchaseId  String
+  productId   String?
+  productName String
+  quantity    Float
+  unitCost    Float
+  lineTotal   Float
+  purchase    Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+model Expense {
+  id            String        @id @default(cuid())
+  businessId    String
+  locationId    String?
+  expenseNumber String
+  category      String
+  description   String
+  amount        Float
+  paymentMethod PaymentMethod
+  date          DateTime      @default(now())
+  notes         String?
+  receiptUrl    String?
+  userId        String?
+  createdAt     DateTime      @default(now())
+  business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  location      Location?     @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model InventoryMovement {
+  id             String    @id @default(cuid())
+  businessId     String
+  productId      String?
+  productName    String
+  type           MovementType
+  quantity       Float // signed: positive = in, negative = out
+  balanceAfter   Float
+  referenceType  String?   // "ORDER" | "PURCHASE" | "ADJUSTMENT" | "RETURN" | ...
+  referenceId    String?
+  notes          String?
+  userId         String?
+  createdAt      DateTime  @default(now())
+  business       Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  product        Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+enum MovementType {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RETURN
+  DAMAGE
+  OTHER
+}
+
+model FinancialTransaction {
+  id            String        @id @default(cuid())
+  businessId    String
+  date          DateTime      @default(now())
+  type          TransactionType
+  category      String?
+  description   String
+  referenceType String?
+  referenceId   String?
+  moneyIn       Float         @default(0)
+  moneyOut      Float         @default(0)
+  balance       Float
+  paymentMethod PaymentMethod?
+  userId        String?
+  createdAt     DateTime      @default(now())
+  business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+enum TransactionType {
+  SALE
+  PURCHASE
+  EXPENSE
+  REFUND
+  ADJUSTMENT
+  OTHER
+}
+
+model Payment {
+  id         String    @id @default(cuid())
+  businessId String
+  orderId    String?
+  customerId String?
+  amount     Float
+  method     PaymentMethod
+  date       DateTime  @default(now())
+  reference  String?
+  createdAt  DateTime  @default(now())
+  order      Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+}
+
+model Sale {
+  id         String    @id @default(cuid())
+  businessId String
+  orderId    String?
+  productId  String?
+  productName String
+  quantity   Float
+  revenue    Float
+  cost       Float
+  profit     Float
+  date       DateTime  @default(now())
+  order      Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  product    Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  businessId String
+  type       String
+  title      String
+  message    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  businessId  String?
+  userId      String?
+  userName    String?
+  action      String
+  entityType  String?
+  entityId    String?
+  details     String?
+  createdAt   DateTime @default(now())
+  business    Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}

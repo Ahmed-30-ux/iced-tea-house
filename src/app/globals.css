@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fdfaf5;
+  --foreground: #2c1810;
+  --brand: #b8860b;
+  --brand-light: #d4a24c;
+  --brand-dark: #8b6508;
+  --accent: #5d4037;
+  --cream: #faf6f0;
+  --warm-gray: #f5f0ea;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-brand: var(--brand);
+}
+
+* {
+  border-color: theme(colors.slate.200);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(184, 134, 11, 0.2);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4c4b0;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b8a898;
+  background-clip: content-box;
+  border: 2px solid transparent;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes zoom-in-95 {
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.animate-in {
+  animation-duration: 180ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+.fade-in { animation-name: fade-in; }
+.zoom-in-95 { animation-name: zoom-in-95; }
+.slide-in-right { animation-name: slide-in-right; }
+.slide-up { animation-name: slide-up; }
+
+.stagger > * {
+  animation: slide-up 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Recharts tweaks */
+.recharts-cartesian-axis-tick-value {
+  font-size: 12px;
+  fill: #94a3b8;
+}
+.recharts-default-tooltip {
+  border-radius: 10px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 30px rgba(44, 24, 16, 0.08) !important;
+}
