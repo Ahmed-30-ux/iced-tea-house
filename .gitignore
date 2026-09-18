@@ -48,3 +48,9 @@ deploy_key.pub
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+deploy_key_clean
+fix-key.js
+keys.txt
+newkey.pub
+ssh_err.txt
+ssh_out.txt
