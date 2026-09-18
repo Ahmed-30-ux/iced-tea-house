@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iced Tea House — Business Operating System Workflow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #faf9f6; color: #333; line-height: 1.7; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 40px 24px; }
+
+    /* Header */
+    .header { text-align: center; padding: 60px 20px 40px; background: linear-gradient(135deg, #b8860b, #8b5a2b); color: white; border-radius: 16px; margin-bottom: 40px; }
+    .header h1 { font-size: 36px; letter-spacing: 2px; margin-bottom: 8px; }
+    .header p { font-size: 16px; opacity: 0.9; }
+    .header .badge { display: inline-block; margin-top: 12px; padding: 4px 16px; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 13px; }
+
+    /* Sections */
+    .section { background: white; border-radius: 12px; padding: 32px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .section h2 { font-size: 22px; color: #b8860b; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #fdf6e3; }
+    .section h3 { font-size: 17px; color: #5d4037; margin: 20px 0 10px; }
+    .section p { margin-bottom: 12px; color: #555; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+    th { background: #fdf6e3; color: #5d4037; padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e8d5b0; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f0ebe3; }
+    tr:hover td { background: #fdfaf5; }
+
+    /* Status badges */
+    .done { background: #d4edda; color: #155724; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .ready { background: #fff3cd; color: #856404; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+
+    /* Flow diagrams */
+    .flow { background: #fdfaf5; border: 1px solid #e8d5b0; border-radius: 10px; padding: 20px; margin: 16px 0; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.8; white-space: pre-wrap; overflow-x: auto; }
+
+    /* Role cards */
+    .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0; }
+    .role-card { background: #fdfaf5; border: 1px solid #e8d5b0; border-radius: 10px; padding: 20px; text-align: center; }
+    .role-card h4 { color: #b8860b; font-size: 18px; margin-bottom: 8px; }
+    .role-card .icon { font-size: 32px; margin-bottom: 8px; }
+    .role-card ul { text-align: left; font-size: 13px; color: #666; list-style: none; padding: 0; }
+    .role-card ul li { padding: 3px 0; }
+    .role-card ul li::before { content: "✓ "; color: #b8860b; font-weight: bold; }
+
+    /* Feature grid */
+    .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 16px 0; }
+    .feature { background: #fdfaf5; border: 1px solid #e8d5b0; border-radius: 10px; padding: 20px; }
+    .feature h4 { color: #5d4037; margin-bottom: 6px; }
+    .feature p { font-size: 13px; color: #888; margin: 0; }
+    .feature .check { color: #b8860b; font-size: 20px; float: right; margin-top: -24px; }
+
+    /* Access diagram */
+    .access-diagram { text-align: center; padding: 30px; background: #fdfaf5; border-radius: 10px; border: 1px solid #e8d5b0; margin: 16px 0; }
+    .devices { display: flex; justify-content: center; gap: 24px; margin: 20px 0; flex-wrap: wrap; }
+    .device { background: white; border: 2px solid #e8d5b0; border-radius: 12px; padding: 16px 24px; text-align: center; min-width: 120px; }
+    .device .icon { font-size: 28px; margin-bottom: 6px; }
+    .device .label { font-size: 12px; color: #888; }
+    .arrow-down { font-size: 24px; color: #b8860b; margin: 12px 0; }
+    .server-box { background: linear-gradient(135deg, #b8860b, #8b5a2b); color: white; padding: 16px 32px; border-radius: 12px; display: inline-block; font-weight: 600; }
+
+    /* Print styles */
+    @media print {
+      body { background: white; }
+      .container { padding: 0; }
+      .section { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+      .header { background: #b8860b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    @media (max-width: 768px) {
+      .roles { grid-template-columns: 1fr; }
+      .features { grid-template-columns: 1fr; }
+      .header h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>ICED TEA HOUSE</h1>
+    <p>Business Operating System — Workflow Documentation</p>
+    <div class="badge">Version 1.0 — September 2026</div>
+  </div>
+
+  <!-- Executive Summary -->
+  <div class="section">
+    <h2>1. Executive Summary</h2>
+    <p>The <strong>Iced Tea House Business Operating System</strong> is a cloud-based, centralized platform that connects every aspect of the business — from taking an order to tracking inventory, managing purchases, recording expenses, and viewing financial reports.</p>
+    <p><strong>One transaction updates everything automatically.</strong> When an order is placed, inventory is tracked, revenue is recorded, profit is calculated, reports are updated, and an audit trail is logged — all instantly.</p>
+    <p>The system is accessible from <strong>any device with a browser</strong> — desktop, tablet, or phone — and all users share the same live data.</p>
+  </div>
+
+  <!-- System Architecture -->
+  <div class="section">
+    <h2>2. System Architecture</h2>
+    <div class="flow">
+┌─────────────────────────────────────────────────────────────┐
+│                     ICED TEA HOUSE SYSTEM                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐ │
+│  │  Desktop  │   │  Tablet  │   │  Phone   │   │  Remote  │ │
+│  │ (Counter) │   │ (Kitchen)│   │ (Staff)  │   │ (Partner)│ │
+│  └─────┬────┘   └─────┬────┘   └─────┬────┘   └─────┬────┘ │
+│        └──────────────┴──────┬───────┴──────────────┘        │
+│                              │                               │
+│                    ┌─────────▼─────────┐                     │
+│                    │   Next.js Server   │                     │
+│                    │   JWT Auth + RBAC  │                     │
+│                    └─────────┬─────────┘                     │
+│                              │                               │
+│                    ┌─────────▼─────────┐                     │
+│                    │   SQLite Database  │                     │
+│                    │   (Auto-Backed Up) │                     │
+│                    └───────────────────┘                     │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  NGINX (Port 80) → PM2 → App (Port 3111)           │    │
+│  │  GitHub Actions Auto-Deploy on push to master        │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘</div>
+
+    <h3>Data Flow — What Happens When an Order is Completed</h3>
+    <div class="flow">
+Staff clicks [Complete Sale]
+        │
+        ▼
+  ┌─────────────┐     ┌──────────────┐     ┌──────────────┐
+  │ 1. VALIDATE │ ──→ │ 2. AUTH CHECK│ ──→ │ 3. BUSINESS  │
+  │ Zod schema  │     │ JWT session  │     │    LOGIC     │
+  └─────────────┘     └──────────────┘     └──────┬───────┘
+                                                   │
+                    ┌──────────┬──────────┬─────────┼─────────┐
+                    ▼          ▼          ▼         ▼         ▼
+              ┌──────────┐┌────────┐┌─────────┐┌────────┐┌────────┐
+              │  ORDER   ││ PAYMENT││INVENTORY││FINANCE ││ AUDIT  │
+              │  RECORD  ││RECORD  ││MOVEMENT ││  TXN   ││  LOG   │
+              └──────────┘└────────┘└─────────┘└────────┘└────────┘
+                    │          │          │         │         │
+                    └──────────┴──────────┴─────────┴─────────┘
+                                     │
+                                     ▼
+                            ┌────────────────┐
+                            │ Reports Updated │
+                            │ Dashboard KPIs  │
+                            │ Notifications   │
+                            └────────────────┘</div>
+  </div>
+
+  <!-- User Roles -->
+  <div class="section">
+    <h2>3. User Roles & Permissions</h2>
+    <div class="roles">
+      <div class="role-card">
+        <div class="icon">👑</div>
+        <h4>Owner</h4>
+        <ul>
+          <li>Full access to everything</li>
+          <li>Delete orders</li>
+          <li>Manage team members</li>
+          <li>System settings</li>
+          <li>View all reports</li>
+          <li>View audit log</li>
+        </ul>
+      </div>
+      <div class="role-card">
+        <div class="icon">⚙️</div>
+        <h4>Manager</h4>
+        <ul>
+          <li>Create/complete/cancel orders</li>
+          <li>Manage products & inventory</li>
+          <li>Create purchases</li>
+          <li>Record expenses</li>
+          <li>View all reports</li>
+          <li>Add customers</li>
+        </ul>
+      </div>
+      <div class="role-card">
+        <div class="icon">🧑‍🍳</div>
+        <h4>Staff</h4>
+        <ul>
+          <li>Take orders</li>
+          <li>View products</li>
+          <li>Record payments</li>
+          <li>View sales reports</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Workflow -->
+  <div class="section">
+    <h2>4. Order Management Workflow</h2>
+    <p>The order workflow is the heart of the system. Here's how a typical order flows through the system:</p>
+
+    <h3>Step 1: Create Order</h3>
+    <div class="flow">
+Staff taps [New Order]
+        │
+        ▼
+┌─────────────────────────────────────────┐
+│  SELECT ORDER TYPE                       │
+│  ◉ Dine-in  ○ Takeaway  ○ Delivery      │
+├─────────────────────────────────────────┤
+│  SELECT SOURCE                           │
+│  ◉ Walk-in  ○ Phone  ○ Foodpanda        │
+│  ○ Uber Eats  ○ Website  ○ Other        │
+├─────────────────────────────────────────┤
+│  ADD ITEMS (tap product cards)           │
+│  ┌─────────────┐  ┌─────────────┐       │
+│  │ 🧋 Mango    │  │ 🧋 Peach    │       │
+│  │   Tea       │  │   Oolong    │       │
+│  │   PKR 200   │  │   PKR 250   │       │
+│  │ [tap to add]│  │ [tap to add]│       │
+│  └─────────────┘  └─────────────┘       │
+├─────────────────────────────────────────┤
+│  CART:                                    │
+│  Mango Tea × 2 .............. PKR 400    │
+│    ↳ Instructions: "Extra ice, no boba"  │
+│  Peach Oolong × 1 ........... PKR 250    │
+│    ↳ Instructions: "Less sugar"          │
+├─────────────────────────────────────────┤
+│  Customer: Ahmed (optional)              │
+│  Discount: 0                             │
+│  Payment: Card (+2.5% fee)              │
+│  ─────────────────────────               │
+│  Subtotal:          PKR 650              │
+│  Card fee (2.5%):   PKR 16              │
+│  TOTAL:             PKR 666              │
+│                                           │
+│  [Save Pending]  [Complete Sale]          │
+└─────────────────────────────────────────┘</div>
+
+    <h3>Step 2: Order Processing</h3>
+    <div class="flow">
+┌─────────┐    ┌───────────┐    ┌───────────┐    ┌─────────┐    ┌───────────┐
+│ PENDING │ →  │ CONFIRMED │ →  │ PREPARING │ →  │  READY  │ →  │ COMPLETED │
+└─────────┘    └───────────┘    └───────────┘    └─────────┘    └───────────┘
+     │              │                │                │
+     └──────────────┴────────────────┴────────────────┘
+                              │
+                              ▼
+                     ┌─────────────┐
+                     │ CANCELLED   │
+                     │ (reverses   │
+                     │  inventory  │
+                     │  + finance) │
+                     └─────────────┘</div>
+
+    <h3>Step 3: What Happens Automatically on Completion</h3>
+    <table>
+      <tr><th>Action</th><th>What Happens</th></tr>
+      <tr><td>Inventory</td><td>Stock deducted for each item, movement record created</td></tr>
+      <tr><td>Revenue</td><td>Financial transaction recorded (skipped for PR orders)</td></tr>
+      <tr><td>COGS</td><td>Cost of goods sold calculated per item</td></tr>
+      <tr><td>Profit</td><td>Gross profit computed (Revenue - COGS)</td></tr>
+      <tr><td>Sales History</td><td>Individual sale records created per item</td></tr>
+      <tr><td>Low Stock</td><td>Automatic alerts if any product drops below reorder level</td></tr>
+      <tr><td>Audit Trail</td><td>Action logged with user, timestamp, and details</td></tr>
+    </table>
+
+    <h3>Step 4: Receipts Generated</h3>
+    <div class="flow">
+┌───────────────────────────────┐     ┌───────────────────────────────┐
+│      CUSTOMER RECEIPT          │     │       KITCHEN SLIP            │
+│───────────────────────────────│     │───────────────────────────────│
+│  ICED TEA HOUSE               │     │  KITCHEN ORDER                │
+│  @icedteahouse                │     │  ORD-001234 · Dine-in         │
+│───────────────────────────────│     │  Customer: Ahmed               │
+│  ORD-001234 · Dine-in         │     │───────────────────────────────│
+│  Sep 18, 2026 2:30 PM         │     │  □ Mango Tea × 2               │
+│  Customer: Ahmed               │     │    ⚠ EXTRA ICE, NO BOBA       │
+│  Source: Walk-in               │     │  □ Peach Oolong × 1            │
+│  ★ PR / COMPLIMENTARY          │     │    ⚠ LESS SUGAR               │
+│───────────────────────────────│     │───────────────────────────────│
+│  Mango Tea      × 2   400     │     │  Status: PREPARING             │
+│    ↳ Extra ice, no boba        │     └───────────────────────────────┘
+│  Peach Oolong   × 1   250     │
+│    ↳ Less sugar                │
+│───────────────────────────────│
+│  Subtotal:          650        │
+│  Card fee (2.5%):    16       │
+│  TOTAL:             666        │
+│  Paid:               666       │
+│───────────────────────────────│
+│  Thank you! Visit @icedteahouse│
+└───────────────────────────────┘</div>
+  </div>
+
+  <!-- PR / Complimentary -->
+  <div class="section">
+    <h2>5. PR / Complimentary Orders</h2>
+    <p>The system has a dedicated workflow for PR (public relations) or complimentary drinks:</p>
+    <div class="flow">
+┌─────────────────────────────────────────┐
+│  User toggles [PR / Comp] button        │
+│                                          │
+│  ✓ Purple indicator appears              │
+│  ✓ Total forced to FREE                  │
+│  ✓ Payment forced to PAID                │
+│  ✓ Status forced to COMPLETED            │
+│                                          │
+│  WHAT STILL HAPPENS:                     │
+│  ✓ Inventory is deducted (tracked)       │
+│  ✓ Order appears in records              │
+│  ✓ Item counts toward product stats      │
+│                                          │
+│  WHAT IS EXCLUDED:                       │
+│  ✗ Revenue NOT recorded                  │
+│  ✗ Does NOT affect financial reports     │
+│  ✗ Shows as PR in all views              │
+└─────────────────────────────────────────┘</div>
+    <p><strong>Result:</strong> PR drinks appear in order records and inventory tracking but are clearly separated from paid revenue in all reports.</p>
+  </div>
+
+  <!-- Card Fees -->
+  <div class="section">
+    <h2>6. Card / POS Payment Charges</h2>
+    <p>When a customer pays by card, the system automatically adds a processing fee:</p>
+    <table>
+      <tr><th>Component</th><th>Example</th></tr>
+      <tr><td>Subtotal</td><td>PKR 1,000</td></tr>
+      <tr><td>Card fee (2.5%)</td><td>PKR 25</td></tr>
+      <tr><td><strong>Total charged</strong></td><td><strong>PKR 1,025</strong></td></tr>
+    </table>
+    <p>The fee percentage is <strong>configurable</strong> in Settings → Payment & Expenses. It can be changed anytime if the bank or payment provider changes its charges.</p>
+  </div>
+
+  <!-- Features -->
+  <div class="section">
+    <h2>7. All Features — Requirements vs Implementation</h2>
+    <div class="features">
+      <div class="feature">
+        <span class="check">✅</span>
+        <h4>1. Order Types</h4>
+        <p>Dine-in, Takeaway, Delivery — selectable on every order, shown on receipts and reports</p>
+      </div>
+      <div class="feature">
+        <span class="check">✅</span>
+        <h4>2. Kitchen & Customer Slips</h4>
+        <p>Print receipts with per-item instructions (extra ice, no boba, etc.), order type, source</p>
+      </div>
+      <div class="feature">
+        <span class="check">✅</span>
+        <h4>3. Card/POS Charges</h4>
+        <p>Auto-calculated 2.5% fee, configurable in Settings, shown in totals and receipts</p>
+      </div>
+      <div class="feature">
+        <span class="check">✅</span>
+        <h4>4. PR / Complimentary</h4>
+        <p>Toggle tracks inventory, excludes from revenue, purple PR badge on orders</p>
+      </div>
+      <div class="feature">
+        <span class="check">✅</span>
+        <h4>5. Menu Images</h4>
+        <p>Product images on order grid, tap-to-add interface, visual product cards</p>
+      </div>
+      <div class="feature">
+        <span class="check">✅</span>
+        <h4>6. Multiple Devices</h4>
+        <p>Cloud-hosted, any browser, JWT auth, role-based access, same live data</p>
+      </div>
+      <div class="feature">
+        <span class="check">✅</span>
+        <h4>7. Cash vs Card</h4>
+        <p>Payment method on every order, filterable in Finance, shown in order list</p>
+      </div>
+      <div class="feature">
+        <span class="check">✅</span>
+        <h4>8. Platform Integration</h4>
+        <p>Order source field ready (Foodpanda, Uber Eats, etc.), architecture supports webhooks</p>
+      </div>
+      <div class="feature">
+        <span class="check">✅</span>
+        <h4>9. Touchscreen</h4>
+        <p>Responsive grid, large tap targets, press feedback, mobile-first layout</p>
+      </div>
+      <div class="feature">
+        <span class="check">✅</span>
+        <h4>10. Scalability</h4>
+        <p>Multi-location support, roles, modular architecture, configurable settings</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multi-Device Access -->
+  <div class="section">
+    <h2>8. Multi-Device & Remote Access</h2>
+    <div class="access-diagram">
+      <div class="devices">
+        <div class="device">
+          <div class="icon">🖥️</div>
+          <strong>Counter PC</strong>
+          <div class="label">Take orders</div>
+        </div>
+        <div class="device">
+          <div class="icon">📱</div>
+          <strong>Kitchen Tablet</strong>
+          <div class="label">View order queue</div>
+        </div>
+        <div class="device">
+          <div class="icon">📲</div>
+          <strong>Manager Phone</strong>
+          <div class="label">Check sales</div>
+        </div>
+        <div class="device">
+          <div class="icon">💻</div>
+          <strong>Partner Abroad</strong>
+          <div class="label">View business data</div>
+        </div>
+      </div>
+      <div class="arrow-down">⬇</div>
+      <div class="server-box">http://173.212.211.175:3111</div>
+      <p style="margin-top:12px;font-size:14px;color:#888;">All devices access the same live database. No syncing issues.</p>
+    </div>
+  </div>
+
+  <!-- Reports -->
+  <div class="section">
+    <h2>9. Reports Available</h2>
+    <table>
+      <tr><th>Report</th><th>What It Shows</th></tr>
+      <tr><td><strong>Sales</strong></td><td>Daily/weekly/monthly revenue, order counts, trends</td></tr>
+      <tr><td><strong>Profit</strong></td><td>Gross profit, COGS, margins per item and overall</td></tr>
+      <tr><td><strong>Products</strong></td><td>Top sellers, slow movers, revenue per product</td></tr>
+      <tr><td><strong>Inventory</strong></td><td>Stock levels, movement history, low stock alerts</td></tr>
+      <tr><td><strong>Expenses</strong></td><td>By category, trends over time</td></tr>
+      <tr><td><strong>Purchases</strong></td><td>Supplier spend, order history</td></tr>
+      <tr><td><strong>Customers</strong></td><td>Top spenders, order frequency, lifetime value</td></tr>
+      <tr><td><strong>Financial</strong></td><td>Cash flow, balance sheet, ledger with method filter</td></tr>
+    </table>
+    <p><strong>Export options:</strong> PDF (branded with Iced Tea House styling) or CSV (for spreadsheets).</p>
+  </div>
+
+  <!-- Infrastructure -->
+  <div class="section">
+    <h2>10. Infrastructure & Support</h2>
+    <table>
+      <tr><th>Component</th><th>Detail</th></tr>
+      <tr><td>Server</td><td>Contabo VPS (Ubuntu 24.04, 10GB SSD)</td></tr>
+      <tr><td>App URL</td><td>http://173.212.211.175:3111</td></tr>
+      <tr><td>Process Manager</td><td>PM2 (auto-restart on crash, memory limits)</td></tr>
+      <tr><td>Backups</td><td>Daily at 3 AM, unlimited retention, ~87KB each</td></tr>
+      <tr><td>Auto-Deploy</td><td>Push to GitHub → auto build & deploy in ~3 min</td></tr>
+      <tr><td>Security</td><td>JWT auth, role-based access, audit trail</td></tr>
+      <tr><td>Support</td><td>Ongoing development team available for issues</td></tr>
+    </table>
+  </div>
+
+  <!-- Login Credentials -->
+  <div class="section">
+    <h2>11. Demo Login Credentials</h2>
+    <table>
+      <tr><th>Role</th><th>Email</th><th>Password</th></tr>
+      <tr><td>Owner</td><td>owner@icedteahouse.com</td><td>password123</td></tr>
+      <tr><td>Manager</td><td>manager@icedteahouse.com</td><td>password123</td></tr>
+      <tr><td>Staff</td><td>staff@icedteahouse.com</td><td>password123</td></tr>
+    </table>
+    <p>Try it now: <a href="http://173.212.211.175:3111" style="color:#b8860b;font-weight:600;">http://173.212.211.175:3111</a></p>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:40px;color:#aaa;font-size:13px;">
+    <p>Iced Tea House — Business Operating System v1.0</p>
+    <p>Workflow Documentation — September 2026</p>
+  </div>
+
+</div>
+
+</body>
+</html>

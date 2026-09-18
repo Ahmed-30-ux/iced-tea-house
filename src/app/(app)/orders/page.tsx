@@ -145,7 +145,7 @@ export default async function OrdersPage({
                 <TableCell>
                   <div className="flex flex-col gap-1">
                     <PaymentStatusBadge status={o.paymentStatus} />
-                    <span className="text-[10px] text-slate-400"><PaymentMethodBadge method={o.paymentMethod} /></span>
+                    {o.paymentMethod && <span className="text-[10px] text-slate-400">{o.paymentMethod.split("_").join(" ").toLowerCase()}</span>}
                   </div>
                 </TableCell>
                 <TableCell className="text-right font-semibold tabular-nums text-slate-800">

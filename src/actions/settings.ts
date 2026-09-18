@@ -58,3 +58,34 @@ export async function changePasswordAction(prevState: any, formData: FormData) {
     return handleActionError(e);
   }
 }
+
+export async function updateCardFeeAction(cardFeePercent: number): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const session = await requireAuth();
+    if (!session.businessId) return { ok: false, error: "No business" };
+    const business = await prisma.business.findUnique({ where: { id: session.businessId } });
+    if (!business) return { ok: false, error: "Business not found" };
+    const settings = business.settings ? JSON.parse(business.settings) : {};
+    settings.cardFeePercent = cardFeePercent;
+    await prisma.business.update({
+      where: { id: session.businessId },
+      data: { settings: JSON.stringify(settings) },
+    });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Failed to save" };
+  }
+}
+
+export async function getCardFeeAction(): Promise<{ ok: boolean; cardFeePercent?: number; error?: string }> {
+  try {
+    const session = await requireAuth();
+    if (!session.businessId) return { ok: false, error: "No business" };
+    const business = await prisma.business.findUnique({ where: { id: session.businessId } });
+    if (!business) return { ok: false, error: "Business not found" };
+    const settings = business.settings ? JSON.parse(business.settings) : {};
+    return { ok: true, cardFeePercent: settings.cardFeePercent ?? 2.5 };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Failed to load" };
+  }
+}

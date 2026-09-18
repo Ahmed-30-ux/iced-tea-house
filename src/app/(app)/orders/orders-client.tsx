@@ -75,7 +75,12 @@ export function OrdersClient({ initialOrders }: { initialOrders: Row[] }) {
                 </span>
               </TableCell>
               <TableCell>{o.itemCount}</TableCell>
-              <TableCell><PaymentStatusBadge status={o.paymentStatus} /></TableCell>
+              <TableCell>
+                <div className="flex flex-col gap-1">
+                  <PaymentStatusBadge status={o.paymentStatus} />
+                  {o.paymentMethod && <span className="text-[10px] text-slate-400">{o.paymentMethod.split("_").join(" ").toLowerCase()}</span>}
+                </div>
+              </TableCell>
               <TableCell className="text-right font-semibold tabular-nums">{o.isComplimentary ? "FREE" : formatCurrency(o.total)}</TableCell>
               <TableCell><OrderStatusBadge status={o.status} /></TableCell>
               <TableCell className="text-right text-xs text-slate-500">{formatDateTime(o.orderDate)}</TableCell>

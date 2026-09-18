@@ -25,7 +25,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { updateBusinessInfoAction, updateProfileAction, changePasswordAction } from "@/actions/settings";
+import { updateBusinessInfoAction, updateProfileAction, changePasswordAction, updateCardFeeAction, getCardFeeAction } from "@/actions/settings";
 import { registerUserAction } from "@/actions/auth";
 import { createCategoryAction, deleteCategoryAction } from "@/actions/categories";
 import { createLocationAction, deleteLocationAction } from "@/actions/locations";
@@ -440,15 +440,27 @@ function LocationsSettings({ locations, onAdd }: { locations: LocationData[]; on
 function PreferencesSettings() {
   const [cardFee, setCardFee] = useState(2.5);
   const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const router = useRouter();
+
+  useState(() => {
+    getCardFeeAction().then((res) => {
+      if (res.ok && res.cardFeePercent !== undefined) {
+        setCardFee(res.cardFeePercent);
+      }
+      setLoaded(true);
+    });
+  });
 
   const saveCardFee = async () => {
     setSaving(true);
-    // Card fee is read from business.settings JSON in the order creation flow
-    // For now we store it in localStorage and display it; production would save to DB via API
-    localStorage.setItem("ith_cardFeePercent", String(cardFee));
-    toast.success(`Card fee set to ${cardFee}%`);
+    const res = await updateCardFeeAction(cardFee);
     setSaving(false);
+    if (res.ok) {
+      toast.success(`Card fee set to ${cardFee}%`);
+    } else {
+      toast.error(res.error ?? "Failed to save");
+    }
   };
 
   return (
