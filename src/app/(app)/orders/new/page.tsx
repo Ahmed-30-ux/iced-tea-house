@@ -30,6 +30,7 @@ export default async function NewOrderPage() {
         costPrice: p.costPrice,
         currentStock: p.currentStock,
         categoryId: p.categoryId,
+        imageUrl: p.imageUrl,
       }))}
       categories={categories.map((c) => ({ id: c.id, name: c.name }))}
       customers={customers.map((c) => ({ id: c.id, name: c.name }))}

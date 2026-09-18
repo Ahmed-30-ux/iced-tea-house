@@ -152,6 +152,10 @@ model Order {
   status         OrderStatus  @default(PENDING)
   paymentStatus  PaymentStatus @default(UNPAID)
   paymentMethod  PaymentMethod?
+  orderType      OrderType    @default(DINE_IN)
+  isComplimentary Boolean    @default(false)
+  cardFee        Float        @default(0)
+  source         OrderSource  @default(WALK_IN)
   subtotal       Float        @default(0)
   discount       Float        @default(0)
   total          Float        @default(0)
@@ -180,6 +184,21 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+
+enum OrderSource {
+  WALK_IN
+  PHONE
+  FOODPANDA
+  UBER_EATS
+  WEBSITE
+  OTHER
+}
+
 enum PaymentStatus {
   PAID
   PARTIALLY_PAID
@@ -204,6 +223,7 @@ model OrderItem {
   costPrice   Float
   discount    Float    @default(0)
   lineTotal   Float
+  instructions String?
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 }

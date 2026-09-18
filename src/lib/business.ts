@@ -8,6 +8,7 @@ export type OrderInputItem = {
   quantity: number;
   unitPrice: number;
   costPrice: number;
+  instructions?: string | null;
 };
 
 export type CreatedBy = Pick<SessionUser, "id" | "name" | "businessId">;
@@ -71,6 +72,9 @@ export async function createOrder(params: {
   amountPaid?: number;
   status?: string | null;
   notes?: string | null;
+  orderType?: string | null;
+  isComplimentary?: boolean;
+  source?: string | null;
   orderDate?: Date;
 }) {
   const businessId = requireBusiness(params.session);
@@ -78,10 +82,24 @@ export async function createOrder(params: {
   if (!params.items.length) throw new Error("Order must have at least one item");
   const discount = Math.max(0, Number(params.discount ?? 0));
   const subtotal = params.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-  const total = Math.max(0, subtotal - discount);
-  const amountPaid = Math.max(0, Number(params.amountPaid ?? 0));
 
-  const paymentStatus = params.paymentStatus ?? (total <= amountPaid ? "PAID" : amountPaid > 0 ? "PARTIALLY_PAID" : "UNPAID");
+  // Card fee calculation (configurable via business settings)
+  let cardFee = 0;
+  const isCard = params.paymentMethod === "CARD";
+  if (isCard && !params.isComplimentary) {
+    const biz = await prisma.business.findUnique({ where: { id: businessId } });
+    const settings = biz?.settings ? JSON.parse(biz.settings) : {};
+    const cardFeePercent = settings.cardFeePercent ?? 2.5;
+    cardFee = Math.round(subtotal * cardFeePercent / 100 * 100) / 100;
+  }
+
+  // Complimentary orders have zero total for revenue purposes
+  const total = params.isComplimentary ? 0 : Math.max(0, subtotal - discount + cardFee);
+  const amountPaid = params.isComplimentary ? 0 : Math.max(0, Number(params.amountPaid ?? 0));
+
+  const paymentStatus = params.isComplimentary
+    ? "PAID"
+    : params.paymentStatus ?? (total <= amountPaid ? "PAID" : amountPaid > 0 ? "PARTIALLY_PAID" : "UNPAID");
 
   const order = await prisma.order.create({
     data: {
@@ -92,6 +110,10 @@ export async function createOrder(params: {
       status: (params.status as any) ?? "PENDING",
       paymentStatus: (paymentStatus as any) ?? "UNPAID",
       paymentMethod: (params.paymentMethod as any) || null,
+      orderType: (params.orderType as any) ?? "DINE_IN",
+      isComplimentary: params.isComplimentary ?? false,
+      cardFee,
+      source: (params.source as any) ?? "WALK_IN",
       subtotal,
       discount,
       total,
@@ -106,6 +128,7 @@ export async function createOrder(params: {
           unitPrice: i.unitPrice,
           costPrice: i.costPrice,
           lineTotal: i.quantity * i.unitPrice,
+          instructions: i.instructions || null,
         })),
       },
     },
@@ -126,7 +149,8 @@ export async function createOrder(params: {
     });
   }
 
-  await writeAudit(businessId, params.session, "Order created", "Order", order.id, `Order ${order.orderNumber} created (${total}).`);
+  const compLabel = params.isComplimentary ? " (PR/Complimentary)" : "";
+  await writeAudit(businessId, params.session, "Order created", "Order", order.id, `Order ${order.orderNumber} created (${total})${compLabel}.`);
 
   if (paymentStatus !== "PAID") {
     await notify(businessId, "unpaid_order", "Unpaid order", `Order ${order.orderNumber} is unpaid (${paymentStatus}).`);
@@ -279,12 +303,13 @@ export async function completeOrder(params: { session: CreatedBy; orderId: strin
     });
   }
 
-  // 4. Record revenue if fully paid
-  if (order.paymentStatus === "PAID") {
+  // 4. Record revenue if fully paid (skip for complimentary orders)
+  if (order.paymentStatus === "PAID" && !order.isComplimentary) {
     await recordSaleRevenue(businessId, order, params.session);
   }
 
-  await writeAudit(businessId, params.session, "Order completed", "Order", order.id, `${order.orderNumber} completed. COGS ${totalCogs}, GP ${grossProfit}.`);
+  const compLabel = order.isComplimentary ? " [PR/Complimentary]" : "";
+  await writeAudit(businessId, params.session, "Order completed", "Order", order.id, `${order.orderNumber} completed${compLabel}. COGS ${totalCogs}, GP ${grossProfit}.`);
   await checkLowStock(businessId);
 }
 

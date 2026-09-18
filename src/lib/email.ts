@@ -4,22 +4,27 @@ type ReceiptEmailOptions = {
   to: string;
   orderNumber: string;
   customerName: string;
-  items: { productName: string; quantity: number; unitPrice: number; lineTotal: number }[];
+  items: { productName: string; quantity: number; unitPrice: number; lineTotal: number; instructions?: string | null }[];
   total: number;
   amountPaid: number;
   paymentStatus: string;
   date: string;
   businessName: string;
+  orderType?: string;
+  isComplimentary?: boolean;
+  cardFee?: number;
 };
 
 export function generateReceiptHtml(options: ReceiptEmailOptions): string {
-  const { orderNumber, customerName, items, total, amountPaid, paymentStatus, date, businessName } = options;
+  const { orderNumber, customerName, items, total, amountPaid, paymentStatus, date, businessName, orderType, isComplimentary, cardFee } = options;
+
+  const typeLabel = orderType === "DINE_IN" ? "Dine-in" : orderType === "TAKEAWAY" ? "Takeaway" : orderType === "DELIVERY" ? "Delivery" : "";
 
   const itemsHtml = items
     .map(
       (i) =>
         `<tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;color:#374151">${i.productName}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;color:#374151">${i.productName}${i.instructions ? `<br><span style="font-size:11px;color:#b8860b">&#9998; ${i.instructions}</span>` : ""}</td>
           <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:center;color:#374151">${i.quantity}</td>
           <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:right;color:#374151">PKR ${i.unitPrice.toLocaleString()}</td>
           <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:right;color:#374151;font-weight:500">PKR ${i.lineTotal.toLocaleString()}</td>
@@ -52,7 +57,7 @@ export function generateReceiptHtml(options: ReceiptEmailOptions): string {
         <table style="width:100%;font-size:14px;color:#6b7280">
           <tr>
             <td style="padding:4px 0">Order</td>
-            <td style="padding:4px 0;text-align:right;font-weight:600;color:#1f2937">${orderNumber}</td>
+            <td style="padding:4px 0;text-align:right;font-weight:600;color:#1f2937">${orderNumber}${typeLabel ? ` · ${typeLabel}` : ""}</td>
           </tr>
           <tr>
             <td style="padding:4px 0">Date</td>
@@ -62,6 +67,7 @@ export function generateReceiptHtml(options: ReceiptEmailOptions): string {
             <td style="padding:4px 0">Customer</td>
             <td style="padding:4px 0;text-align:right;color:#1f2937">${customerName}</td>
           </tr>
+          ${isComplimentary ? `<tr><td style="padding:4px 0"></td><td style="padding:4px 0;text-align:right"><span style="background:#f3e8ff;color:#7c3aed;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600">★ PR / COMPLIMENTARY</span></td></tr>` : ""}
         </table>
       </div>
 

@@ -36,12 +36,16 @@ export async function sendOrderReceiptAction(orderId: string): Promise<ActionRes
         quantity: i.quantity,
         unitPrice: i.unitPrice,
         lineTotal: i.lineTotal,
+        instructions: i.instructions,
       })),
       total: order.total,
       amountPaid: order.amountPaid,
       paymentStatus: order.paymentStatus,
       date: order.orderDate.toISOString(),
       businessName: order.business.name,
+      orderType: order.orderType,
+      isComplimentary: order.isComplimentary,
+      cardFee: order.cardFee,
     });
 
     if (result.ok) {

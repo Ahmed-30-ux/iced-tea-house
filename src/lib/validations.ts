@@ -6,6 +6,7 @@ export const orderItemSchema = z.object({
   quantity: z.number().positive("Quantity must be positive"),
   unitPrice: z.number().nonnegative(),
   costPrice: z.number().nonnegative(),
+  instructions: z.string().nullable().optional(),
 });
 
 export const createOrderSchema = z.object({
@@ -17,6 +18,9 @@ export const createOrderSchema = z.object({
   amountPaid: z.number().nonnegative().optional(),
   status: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
+  orderType: z.string().nullable().optional(),
+  isComplimentary: z.boolean().optional(),
+  source: z.string().nullable().optional(),
 });
 
 export const createProductSchema = z.object({

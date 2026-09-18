@@ -46,6 +46,10 @@ export default async function OrderDetailPage({
         status: order.status,
         paymentStatus: order.paymentStatus,
         paymentMethod: order.paymentMethod,
+        orderType: order.orderType,
+        isComplimentary: order.isComplimentary,
+        cardFee: order.cardFee,
+        source: order.source,
         subtotal: order.subtotal,
         discount: order.discount,
         total: order.total,
@@ -61,6 +65,7 @@ export default async function OrderDetailPage({
           unitPrice: i.unitPrice,
           costPrice: i.costPrice,
           lineTotal: i.lineTotal,
+          instructions: i.instructions,
         })),
         payments: order.payments.map((p) => ({
           id: p.id,

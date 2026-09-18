@@ -101,6 +101,8 @@ export default async function OrdersPage({
         status: o.status,
         orderDate: o.orderDate.toISOString(),
         paymentMethod: o.paymentMethod,
+        orderType: o.orderType,
+        isComplimentary: o.isComplimentary,
       }))} />
 
       <Card className="mt-4">
@@ -109,6 +111,7 @@ export default async function OrdersPage({
             <TableRow>
               <TableHead>Order</TableHead>
               <TableHead>Customer</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Items</TableHead>
               <TableHead>Payment</TableHead>
               <TableHead className="text-right">Amount</TableHead>
@@ -119,7 +122,7 @@ export default async function OrdersPage({
           <TableBody>
             {orders.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-slate-400">
+                <TableCell colSpan={8} className="py-12 text-center text-slate-400">
                   No orders found
                 </TableCell>
               </TableRow>
@@ -132,6 +135,12 @@ export default async function OrdersPage({
                   </Link>
                 </TableCell>
                 <TableCell>{o.customer?.name ?? "Walk-in"}</TableCell>
+                <TableCell>
+                  <span className="text-xs">
+                    {o.isComplimentary && <span className="mr-1 rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700">PR</span>}
+                    {o.orderType === "DINE_IN" ? "Dine-in" : o.orderType === "TAKEAWAY" ? "Takeaway" : "Delivery"}
+                  </span>
+                </TableCell>
                 <TableCell>{o.items.reduce((s, i) => s + i.quantity, 0)}</TableCell>
                 <TableCell>
                   <div className="flex flex-col gap-1">
@@ -140,7 +149,7 @@ export default async function OrdersPage({
                   </div>
                 </TableCell>
                 <TableCell className="text-right font-semibold tabular-nums text-slate-800">
-                  {formatCurrency(o.total)}
+                  {o.isComplimentary ? "FREE" : formatCurrency(o.total)}
                 </TableCell>
                 <TableCell><OrderStatusBadge status={o.status} /></TableCell>
                 <TableCell className="text-right text-xs text-slate-500">{formatDateTime(o.orderDate)}</TableCell>

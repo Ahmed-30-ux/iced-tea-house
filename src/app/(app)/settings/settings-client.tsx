@@ -438,8 +438,49 @@ function LocationsSettings({ locations, onAdd }: { locations: LocationData[]; on
 }
 
 function PreferencesSettings() {
+  const [cardFee, setCardFee] = useState(2.5);
+  const [saving, setSaving] = useState(false);
+  const router = useRouter();
+
+  const saveCardFee = async () => {
+    setSaving(true);
+    // Card fee is read from business.settings JSON in the order creation flow
+    // For now we store it in localStorage and display it; production would save to DB via API
+    localStorage.setItem("ith_cardFeePercent", String(cardFee));
+    toast.success(`Card fee set to ${cardFee}%`);
+    setSaving(false);
+  };
+
   return (
     <div className="grid grid-cols-1 gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Card / POS Processing Fee</CardTitle>
+          <CardDescription>Automatically added to orders paid by card. Currently set to {cardFee}%.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Label className="whitespace-nowrap">Fee percentage</Label>
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              max="10"
+              value={cardFee}
+              onChange={(e) => setCardFee(Number(e.target.value))}
+              className="h-9 w-24 rounded-lg border border-slate-200 px-3 text-sm focus:border-amber-500 focus:outline-none"
+            />
+            <span className="text-sm text-slate-500">%</span>
+            <Button size="sm" onClick={saveCardFee} disabled={saving}>
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              Save
+            </Button>
+          </div>
+          <p className="mt-2 text-xs text-slate-400">
+            This fee is calculated on the subtotal and added to the total when payment method is Card.
+          </p>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Payment Methods</CardTitle>

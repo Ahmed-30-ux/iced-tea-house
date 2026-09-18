@@ -20,6 +20,8 @@ type Row = {
   status: string;
   orderDate: string;
   paymentMethod: string | null;
+  orderType: string;
+  isComplimentary: boolean;
 };
 
 export function OrdersClient({ initialOrders }: { initialOrders: Row[] }) {
@@ -44,6 +46,7 @@ export function OrdersClient({ initialOrders }: { initialOrders: Row[] }) {
           <TableRow>
             <TableHead>Order</TableHead>
             <TableHead>Customer</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Items</TableHead>
             <TableHead>Payment</TableHead>
             <TableHead className="text-right">Amount</TableHead>
@@ -54,7 +57,7 @@ export function OrdersClient({ initialOrders }: { initialOrders: Row[] }) {
         <TableBody>
           {filtered.length === 0 && (
             <TableRow>
-              <TableCell colSpan={7} className="py-12 text-center text-slate-400">No orders match your search</TableCell>
+              <TableCell colSpan={8} className="py-12 text-center text-slate-400">No orders match your search</TableCell>
             </TableRow>
           )}
           {filtered.map((o) => (
@@ -65,9 +68,15 @@ export function OrdersClient({ initialOrders }: { initialOrders: Row[] }) {
                 </Link>
               </TableCell>
               <TableCell>{o.customer}</TableCell>
+              <TableCell>
+                <span className="text-xs">
+                  {o.isComplimentary && <span className="mr-1 rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700">PR</span>}
+                  {o.orderType === "DINE_IN" ? "Dine-in" : o.orderType === "TAKEAWAY" ? "Takeaway" : "Delivery"}
+                </span>
+              </TableCell>
               <TableCell>{o.itemCount}</TableCell>
               <TableCell><PaymentStatusBadge status={o.paymentStatus} /></TableCell>
-              <TableCell className="text-right font-semibold tabular-nums">{formatCurrency(o.total)}</TableCell>
+              <TableCell className="text-right font-semibold tabular-nums">{o.isComplimentary ? "FREE" : formatCurrency(o.total)}</TableCell>
               <TableCell><OrderStatusBadge status={o.status} /></TableCell>
               <TableCell className="text-right text-xs text-slate-500">{formatDateTime(o.orderDate)}</TableCell>
             </TableRow>

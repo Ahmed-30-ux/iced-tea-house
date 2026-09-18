@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Undo2, CheckCircle2, Banknote, Printer, Mail } from "lucide-react";
+import { ArrowLeft, Loader2, Undo2, CheckCircle2, Banknote, Printer, Mail, Utensils, Package, Truck, Gift, MessageSquare } from "lucide-react";
 import { formatCurrency, formatDateTime, cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,10 @@ type OrderData = {
   status: string;
   paymentStatus: string;
   paymentMethod: string | null;
+  orderType: string;
+  isComplimentary: boolean;
+  cardFee: number;
+  source: string;
   subtotal: number;
   discount: number;
   total: number;
@@ -36,7 +40,7 @@ type OrderData = {
   amountPaid: number;
   notes: string | null;
   orderDate: string;
-  items: { id: string; productName: string; quantity: number; unitPrice: number; costPrice: number; lineTotal: number }[];
+  items: { id: string; productName: string; quantity: number; unitPrice: number; costPrice: number; lineTotal: number; instructions: string | null }[];
   payments: { id: string; amount: number; method: string; date: string }[];
   createdBy: string;
 };
@@ -72,12 +76,13 @@ export function OrderDetailClient({
   const awaitingPayment = order.total - order.amountPaid;
 
   const printReceipt = () => {
-    const win = window.open("", "_blank", "width=280,height=500");
+    const win = window.open("", "_blank", "width=280,height=600");
     if (!win) return;
+    const typeLabel = order.orderType === "DINE_IN" ? "Dine-in" : order.orderType === "TAKEAWAY" ? "Takeaway" : "Delivery";
     const itemsHtml = order.items
       .map(
         (i) =>
-          `<tr><td>${i.productName} × ${i.quantity}</td><td style="text-align:right">${formatCurrency(i.quantity * i.unitPrice)}</td></tr>`
+          `<tr><td>${i.productName} × ${i.quantity}${i.instructions ? `<br><small style="color:#b8860b">  ${i.instructions}</small>` : ""}</td><td style="text-align:right">${formatCurrency(i.quantity * i.unitPrice)}</td></tr>`
       )
       .join("");
     win.document.write(`
@@ -89,13 +94,16 @@ export function OrderDetailClient({
       </style></head><body>
         <h1>ICED TEA HOUSE</h1>
         <div>@icedteahouse</div><hr>
-        <div><b>${order.orderNumber}</b></div>
+        <div><b>${order.orderNumber}</b> · ${typeLabel}</div>
         <div>${formatDateTime(order.orderDate)}</div>
-        <div>Customer: ${order.customer}</div><hr>
+        <div>Customer: ${order.customer}</div>
+        <div>Source: ${order.source.split("_").join(" ")}</div>
+        ${order.isComplimentary ? '<div style="color:#7c3aed;font-weight:bold">★ PR / COMPLIMENTARY</div>' : ""}<hr>
         <table>${itemsHtml}</table><hr>
         <div>Subtotal: <span class="r" style="float:right">${formatCurrency(order.subtotal)}</span></div>
         ${order.discount > 0 ? `<div>Discount: <span class="r" style="float:right">-${formatCurrency(order.discount)}</span></div>` : ""}
-        <div class="tot">TOTAL: <span class="r" style="float:right">${formatCurrency(order.total)}</span></div>
+        ${order.cardFee > 0 ? `<div>Card fee: <span class="r" style="float:right">${formatCurrency(order.cardFee)}</span></div>` : ""}
+        <div class="tot">TOTAL: <span class="r" style="float:right">${order.isComplimentary ? "FREE" : formatCurrency(order.total)}</span></div>
         <div>Paid: <span class="r" style="float:right">${formatCurrency(order.amountPaid)}</span></div>
         <div>Status: ${order.status === "COMPLETED" ? "COMPLETED" : order.status} · ${order.paymentStatus}</div>
         <hr><center>Thank you! Visit @icedteahouse</center>
@@ -197,7 +205,15 @@ export function OrderDetailClient({
                 <TableBody>
                   {order.items.map((i) => (
                     <TableRow key={i.id}>
-                      <TableCell className="font-medium text-slate-800">{i.productName}</TableCell>
+                      <TableCell className="font-medium text-slate-800">
+                        {i.productName}
+                        {i.instructions && (
+                          <div className="mt-0.5 flex items-center gap-1 text-xs text-amber-600">
+                            <MessageSquare className="h-3 w-3" />
+                            {i.instructions}
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="text-center tabular-nums">{i.quantity}</TableCell>
                       <TableCell className="text-right tabular-nums">{formatCurrency(i.unitPrice)}</TableCell>
                       <TableCell className="text-right font-medium tabular-nums">{formatCurrency(i.lineTotal)}</TableCell>
@@ -216,8 +232,18 @@ export function OrderDetailClient({
                     <span>Discount</span><span className="tabular-nums">-{formatCurrency(order.discount)}</span>
                   </div>
                 )}
+                {order.cardFee > 0 && (
+                  <div className="flex justify-between text-amber-600">
+                    <span>Card fee (2.5%)</span><span className="tabular-nums">{formatCurrency(order.cardFee)}</span>
+                  </div>
+                )}
+                {order.isComplimentary && (
+                  <div className="flex justify-between text-purple-600">
+                    <span>PR / Complimentary</span><span className="tabular-nums font-semibold">FREE</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-bold text-slate-900">
-                  <span>Total</span><span className="tabular-nums">{formatCurrency(order.total)}</span>
+                  <span>Total</span><span className="tabular-nums">{order.isComplimentary ? "FREE" : formatCurrency(order.total)}</span>
                 </div>
                 <div className="flex justify-between text-slate-500">
                   <span>Paid</span><span className="tabular-nums text-amber-700">{formatCurrency(order.amountPaid)}</span>
@@ -301,6 +327,21 @@ export function OrderDetailClient({
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-slate-500">Customer</span><span className="font-medium text-slate-800">{order.customer}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Date</span><span className="font-medium text-slate-800">{formatDateTime(order.orderDate)}</span></div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Type</span>
+                <span className="flex items-center gap-1 font-medium text-slate-800">
+                  {order.orderType === "DINE_IN" && <Utensils className="h-3.5 w-3.5 text-amber-600" />}
+                  {order.orderType === "TAKEAWAY" && <Package className="h-3.5 w-3.5 text-blue-600" />}
+                  {order.orderType === "DELIVERY" && <Truck className="h-3.5 w-3.5 text-green-600" />}
+                  {order.orderType === "DINE_IN" ? "Dine-in" : order.orderType === "TAKEAWAY" ? "Takeaway" : "Delivery"}
+                </span>
+              </div>
+              <div className="flex justify-between"><span className="text-slate-500">Source</span><span className="font-medium text-slate-800">{order.source.split("_").join(" ").toLowerCase()}</span></div>
+              {order.isComplimentary && (
+                <div className="flex items-center gap-1.5 rounded-lg bg-purple-50 px-3 py-2 text-sm text-purple-700">
+                  <Gift className="h-4 w-4" /> PR / Complimentary Order
+                </div>
+              )}
               <div className="flex justify-between"><span className="text-slate-500">Payment</span><PaymentStatusBadge status={order.paymentStatus} /></div>
               <div className="flex justify-between"><span className="text-slate-500">Status</span><OrderStatusBadge status={order.status} /></div>
               <div className="flex justify-between"><span className="text-slate-500">Created by</span><span className="font-medium text-slate-800">{order.createdBy}</span></div>

@@ -4,14 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Minus, Trash2, ShoppingCart, ArrowLeft, CheckCircle2, Save } from "lucide-react";
+import { Plus, Minus, Trash2, ShoppingCart, ArrowLeft, CheckCircle2, Save, MessageSquare, Utensils, Package, Truck, Gift } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { createOrderAction } from "@/actions/orders";
 import { SearchInput } from "@/components/ui/shared";
 
-type Product = { id: string; name: string; sellingPrice: number; costPrice: number; currentStock: number; categoryId: string | null };
+type Product = { id: string; name: string; sellingPrice: number; costPrice: number; currentStock: number; categoryId: string | null; imageUrl: string | null };
 type Category = { id: string; name: string };
 type Customer = { id: string; name: string };
 
@@ -21,7 +21,23 @@ type CartItem = {
   quantity: number;
   unitPrice: number;
   costPrice: number;
+  instructions: string;
 };
+
+const ORDER_TYPES = [
+  { value: "DINE_IN", label: "Dine-in", icon: Utensils },
+  { value: "TAKEAWAY", label: "Takeaway", icon: Package },
+  { value: "DELIVERY", label: "Delivery", icon: Truck },
+];
+
+const ORDER_SOURCES = [
+  { value: "WALK_IN", label: "Walk-in" },
+  { value: "PHONE", label: "Phone" },
+  { value: "FOODPANDA", label: "Foodpanda" },
+  { value: "UBER_EATS", label: "Uber Eats" },
+  { value: "WEBSITE", label: "Website" },
+  { value: "OTHER", label: "Other" },
+];
 
 export function NewOrderClient({
   products,
@@ -40,6 +56,10 @@ export function NewOrderClient({
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [discount, setDiscount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [orderType, setOrderType] = useState("DINE_IN");
+  const [isComplimentary, setIsComplimentary] = useState(false);
+  const [orderSource, setOrderSource] = useState("WALK_IN");
+  const [editingInstructions, setEditingInstructions] = useState<string | null>(null);
 
   const filtered = products.filter((p) => {
     const matchesCat = selectedCat === "all" || p.categoryId === selectedCat;
@@ -59,7 +79,7 @@ export function NewOrderClient({
           i.productId === p.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      return [...prev, { productId: p.id, name: p.name, quantity: 1, unitPrice: p.sellingPrice, costPrice: p.costPrice }];
+      return [...prev, { productId: p.id, name: p.name, quantity: 1, unitPrice: p.sellingPrice, costPrice: p.costPrice, instructions: "" }];
     });
   };
 
@@ -71,8 +91,19 @@ export function NewOrderClient({
     );
   };
 
+  const updateInstructions = (productId: string, instructions: string) => {
+    setCart((prev) =>
+      prev.map((i) => (i.productId === productId ? { ...i, instructions } : i))
+    );
+  };
+
+  const removeFromCart = (productId: string) => {
+    setCart((prev) => prev.filter((i) => i.productId !== productId));
+  };
+
   const subtotal = cart.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-  const total = Math.max(0, subtotal - discount);
+  const cardFee = paymentMethod === "CARD" && !isComplimentary ? Math.round(subtotal * 0.025 * 100) / 100 : 0;
+  const total = isComplimentary ? 0 : Math.max(0, subtotal - discount + cardFee);
 
   const submit = async (complete: boolean) => {
     if (!cart.length) {
@@ -84,21 +115,26 @@ export function NewOrderClient({
     if (customerId) form.append("customerId", customerId);
     form.append("discount", String(discount));
     form.append("paymentMethod", paymentMethod);
-    form.append("amountPaid", complete ? String(total) : "0");
-    form.append("paymentStatus", complete ? "PAID" : "UNPAID");
-    form.append("status", complete ? "COMPLETED" : "PENDING");
+    form.append("amountPaid", isComplimentary ? "0" : complete ? String(total) : "0");
+    form.append("paymentStatus", isComplimentary ? "PAID" : complete ? "PAID" : "UNPAID");
+    form.append("status", isComplimentary ? "COMPLETED" : complete ? "COMPLETED" : "PENDING");
+    form.append("orderType", orderType);
+    form.append("isComplimentary", String(isComplimentary));
+    form.append("source", orderSource);
     for (const item of cart) {
       form.append("itemName", item.name);
       form.append("itemQty", String(item.quantity));
       form.append("itemPrice", String(item.unitPrice));
       form.append("itemCost", String(item.costPrice));
       form.append("itemProductId", item.productId);
+      form.append("itemInstructions", item.instructions);
     }
 
     const res = await createOrderAction(null, form);
     setSubmitting(false);
     if (res.ok) {
-      toast.success(complete ? "Order completed — inventory & revenue updated" : "Order saved as pending");
+      const label = isComplimentary ? "PR/Complimentary order recorded" : complete ? "Order completed — inventory & revenue updated" : "Order saved as pending";
+      toast.success(label);
       router.push(`/orders/${res.data.id}`);
       router.refresh();
     } else {
@@ -118,6 +154,42 @@ export function NewOrderClient({
           </Link>
           <h1 className="text-lg font-bold text-slate-900">New Order</h1>
           <div className="w-24" />
+        </div>
+
+        {/* Order type selector */}
+        <div className="mb-4 flex gap-2">
+          {ORDER_TYPES.map((ot) => {
+            const Icon = ot.icon;
+            return (
+              <button
+                key={ot.value}
+                onClick={() => setOrderType(ot.value)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-all",
+                  orderType === ot.value
+                    ? "border-amber-600 bg-amber-50 text-amber-800"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-amber-300"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {ot.label}
+              </button>
+            );
+          })}
+          <div className="ml-auto">
+            <button
+              onClick={() => setIsComplimentary(!isComplimentary)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-all",
+                isComplimentary
+                  ? "border-purple-600 bg-purple-50 text-purple-800"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-purple-300"
+              )}
+            >
+              <Gift className="h-3.5 w-3.5" />
+              {isComplimentary ? "PR Order" : "PR / Comp"}
+            </button>
+          </div>
         </div>
 
         <div className="mb-4">
@@ -147,9 +219,13 @@ export function NewOrderClient({
               )}
             >
               <div className="flex items-center justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-600/10 to-amber-600/10 text-lg">
-                  🧋
-                </div>
+                {p.imageUrl ? (
+                  <img src={p.imageUrl} alt={p.name} className="h-10 w-10 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-600/10 to-amber-600/10 text-lg">
+                    🧋
+                  </div>
+                )}
                 <Plus className="h-4 w-4 text-amber-700 opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
               <p className="mt-2 line-clamp-2 min-h-[2rem] text-[13px] font-medium leading-snug text-slate-800">{p.name}</p>
@@ -188,19 +264,54 @@ export function NewOrderClient({
           ) : (
             <div className="max-h-[40vh] space-y-2 overflow-y-auto">
               {cart.map((item) => (
-                <div key={item.productId} className="flex items-center gap-2 rounded-lg border border-slate-100 p-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-medium text-slate-800">{item.name}</p>
-                    <p className="text-xs text-slate-400">{formatCurrency(item.unitPrice)} each</p>
+                <div key={item.productId} className="rounded-lg border border-slate-100 p-2">
+                  <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-medium text-slate-800">{item.name}</p>
+                      <p className="text-xs text-slate-400">{formatCurrency(item.unitPrice)} each</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => updateQty(item.productId, -1)} className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 hover:bg-slate-50">
+                        <Minus className="h-3 w-3 text-slate-500" />
+                      </button>
+                      <span className="w-7 text-center text-sm font-semibold tabular-nums">{item.quantity}</span>
+                      <button onClick={() => updateQty(item.productId, 1)} className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 hover:bg-slate-50">
+                        <Plus className="h-3 w-3 text-slate-500" />
+                      </button>
+                    </div>
+                    <button onClick={() => removeFromCart(item.productId)} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-rose-50 hover:text-rose-500">
+                      <Trash2 className="h-3 w-3" />
+                    </button>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => updateQty(item.productId, -1)} className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 hover:bg-slate-50">
-                      <Minus className="h-3 w-3 text-slate-500" />
-                    </button>
-                    <span className="w-7 text-center text-sm font-semibold tabular-nums">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.productId, 1)} className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 hover:bg-slate-50">
-                      <Plus className="h-3 w-3 text-slate-500" />
-                    </button>
+                  {/* Per-item instructions */}
+                  <div className="mt-1.5">
+                    {editingInstructions === item.productId ? (
+                      <div className="flex gap-1">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={item.instructions}
+                          onChange={(e) => updateInstructions(item.productId, e.target.value)}
+                          onBlur={() => setEditingInstructions(null)}
+                          onKeyDown={(e) => e.key === "Enter" && setEditingInstructions(null)}
+                          placeholder="e.g. Extra ice, no boba, less sugar"
+                          className="h-7 flex-1 rounded border border-amber-300 px-2 text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setEditingInstructions(item.productId)}
+                        className={cn(
+                          "flex w-full items-center gap-1 rounded px-2 py-1 text-left text-xs transition-colors",
+                          item.instructions
+                            ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                            : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+                        )}
+                      >
+                        <MessageSquare className="h-3 w-3 shrink-0" />
+                        {item.instructions || "Add instructions..."}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -240,11 +351,23 @@ export function NewOrderClient({
                       className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:border-amber-500 focus:outline-none"
                     >
                       <option value="CASH">Cash</option>
-                      <option value="CARD">Card</option>
+                      <option value="CARD">Card (+2.5% fee)</option>
                       <option value="BANK_TRANSFER">Bank Transfer</option>
                       <option value="OTHER">Other</option>
                     </select>
                   </div>
+                </div>
+                <div>
+                  <p className="mb-1 text-xs font-medium text-slate-600">Order Source</p>
+                  <select
+                    value={orderSource}
+                    onChange={(e) => setOrderSource(e.target.value)}
+                    className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm focus:border-amber-500 focus:outline-none"
+                  >
+                    {ORDER_SOURCES.map((s) => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -257,8 +380,18 @@ export function NewOrderClient({
                     <span>Discount</span><span className="tabular-nums">-{formatCurrency(discount)}</span>
                   </div>
                 )}
+                {cardFee > 0 && (
+                  <div className="flex justify-between text-amber-600">
+                    <span>Card fee (2.5%)</span><span className="tabular-nums">{formatCurrency(cardFee)}</span>
+                  </div>
+                )}
+                {isComplimentary && (
+                  <div className="flex justify-between text-purple-600">
+                    <span>PR / Complimentary</span><span className="tabular-nums font-semibold">FREE</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-base font-bold text-slate-900">
-                  <span>Total</span><span className="tabular-nums">{formatCurrency(total)}</span>
+                  <span>Total</span><span className="tabular-nums">{isComplimentary ? "FREE" : formatCurrency(total)}</span>
                 </div>
               </div>
 
@@ -273,7 +406,7 @@ export function NewOrderClient({
                 </Button>
               </div>
               <p className="mt-2 text-center text-[11px] text-slate-400">
-                Completing deducts inventory and records revenue automatically.
+                {isComplimentary ? "PR orders track inventory but skip revenue." : "Completing deducts inventory and records revenue automatically."}
               </p>
             </>
           )}

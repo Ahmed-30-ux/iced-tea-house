@@ -17,6 +17,7 @@ export async function createOrderAction(prevState: any, formData: FormData): Pro
     const qtyRaw = formData.getAll("itemQty");
     const priceRaw = formData.getAll("itemPrice");
     const pidRaw = formData.getAll("itemProductId");
+    const instrRaw = formData.getAll("itemInstructions");
 
     const items = itemsRaw.map((name, i) => ({
       productId: String(pidRaw[i] ?? "") || null,
@@ -24,6 +25,7 @@ export async function createOrderAction(prevState: any, formData: FormData): Pro
       quantity: num(qtyRaw[i]),
       unitPrice: num(priceRaw[i]),
       costPrice: num(formData.getAll("itemCost")[i] ?? 0),
+      instructions: String(instrRaw[i] ?? "") || null,
     }));
 
     const input = {
@@ -35,6 +37,9 @@ export async function createOrderAction(prevState: any, formData: FormData): Pro
       amountPaid: num(formData.get("amountPaid")),
       status: String(formData.get("status") ?? "") || null,
       notes: String(formData.get("notes") ?? "") || null,
+      orderType: String(formData.get("orderType") ?? "") || null,
+      isComplimentary: formData.get("isComplimentary") === "true",
+      source: String(formData.get("source") ?? "") || null,
     };
 
     const parsed = createOrderSchema.safeParse(input);
