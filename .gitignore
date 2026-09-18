@@ -41,6 +41,10 @@ yarn-error.log*
 *.db
 *.db-journal
 
+# deploy keys
+deploy_key
+deploy_key.pub
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -1,0 +1,25 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/iced-tea-house
+            git pull
+            npm ci --omit=dev
+            npx prisma generate
+            DATABASE_URL=file:./prod.db npx prisma db push --skip-generate
+            DATABASE_URL=file:./prod.db npm run build
+            pm2 restart iced-tea-house
+            echo "Deploy complete at $(date)"
